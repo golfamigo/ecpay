@@ -1,0 +1,115 @@
+/*
+//引入所需的模塊
+const express = require('express');
+const ecpay_payment = require('ecpay_aio_nodejs');
+require('dotenv').config();
+
+//使用環境變數中的資訊初始化SDK
+const options = {
+    OperationMode: 'Test', // 設為'Test'以使用測試模式，或'Production'以進行實際交易
+    MercProfile: {
+      MerchantID: process.env.MERCHANTID,
+      HashKey: process.env.HASHKEY,
+      HashIV: process.env.HASHIV,
+    },
+    IgnorePayment: [], // 您可以在此指定需要忽略的支付方式
+  };
+
+  
+//設定支付請求的基本參數
+let base_param = {
+    MerchantTradeNo: 'test' + new Date().getTime(), // 確保每次請求的交易編號唯一
+    MerchantTradeDate: new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' }),
+    TotalAmount: '100',
+    TradeDesc: '商品描述',
+    ItemName: '商品名稱',
+    ReturnURL: `${process.env.HOST}/return`, // 綠界支付完成後的伺服器端回調地址
+    ClientBackURL: `${process.env.HOST}/clientReturn`, // 支付完成後的客戶端返回地址
+  };
+
+//發起支付請求
+//當用戶準備支付時，您可以使用SDK來生成支付頁面並將用戶導向至綠界的支付頁面。
+
+//設定一個路由來處理支付請求
+const router = express.Router();
+router.get('/pay', (req, res) => {
+  const create = new ecpay_payment(options);
+  const html = create.payment_client.aio_check_out_all(base_param, options);
+  res.send(html); // 發送生成的支付頁面給客戶端
+});
+
+
+//將此路由加入到您的Express應用中
+const app = express();
+app.use('/', router);
+
+
+//處理支付回應
+//綠界支付完成後會向您提供的ReturnURL發送支付結果。您需要設定一個路由來處理這些回應。
+
+//在您的路由文件中新增一個處理POST請求的路由
+router.post('/return', (req, res) => {
+  console.log('支付結果:', req.body);
+  // 您可以在此進行後續處理，如驗證支付結果等
+  res.send('1|OK'); // 確認已接收到支付結果
+});
+
+//完成上述步驟後，您的Node.js應用將能夠發起綠界支付請求並處理支付結果。記得在部署到生產環境前將OperationMode設定為Production。
+
+
+
+
+//根據上述指南，我將開始實施綠界金流Node.js SDK的串接程式
+*/
+
+
+// 引入必要的模組
+const express = require('express');
+const ecpay_payment = require('ecpay_aio_nodejs');
+require('dotenv').config();
+
+const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// 初始化綠界SDK配置
+const options = {
+  OperationMode: 'Test', // 設為'Test'以使用測試模式，'Production'為實際交易模式
+  MercProfile: {
+    MerchantID: process.env.MERCHANTID,
+    HashKey: process.env.HASHKEY,
+    HashIV: process.env.HASHIV,
+  },
+  IgnorePayment: [], // 指定需要忽略的支付方式
+};
+
+// 設定支付請求的基本參數
+let base_param = {
+  MerchantTradeNo: 'test' + new Date().getTime(), // 確保每次請求的交易編號唯一
+  MerchantTradeDate: new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' }),
+  TotalAmount: '100',
+  TradeDesc: '商品描述',
+  ItemName: '商品名稱',
+  ReturnURL: `${process.env.HOST}/return`, // 綠界支付完成後的伺服器端回調地址
+  ClientBackURL: `${process.env.HOST}/clientReturn`, // 支付完成後的客戶端返回地址
+};
+
+// 設定路由以處理支付請求
+app.get('/pay', (req, res) => {
+  const create = new ecpay_payment(options);
+  const html = create.payment_client.aio_check_out_all(base_param, options);
+  res.send(html); // 發送生成的支付頁面給客戶端
+});
+
+// 設定路由以處理綠界支付回應
+app.post('/return', (req, res) => {
+  console.log('支付結果:', req.body);
+  // 您可以在此進行後續處理，如驗證支付結果等
+  res.send('1|OK'); // 確認已接收到支付結果
+});
+
+// 啟動伺服器
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`伺服器正在監聽端口 ${PORT}`);
+});
