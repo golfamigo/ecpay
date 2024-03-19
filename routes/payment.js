@@ -15,6 +15,13 @@ router.get('/pay', (req, res) => {
     res.render('pay', { title: '支付', html }); // 确保有一个名为 'pay' 的视图模板
 });
 
+// 1.0.1新增，處理來自前端的POST請求，生成支付表單HTML
+router.post('/create', (req, res) => {
+    const { TotalAmount, TradeDesc, ItemName } = req.body;
+    const html = paymentService.generatePaymentHTML(TotalAmount, TradeDesc, ItemName);
+    res.send(html); // 將生成的HTML作為響應發送回前端
+});
+
 router.post('/return', async (req, res) => {
     const isCheckMacValueValid = paymentService.checkMacValue(req.body);
     console.log('确认交易正确性：', isCheckMacValueValid, req.body.CheckMacValue);
